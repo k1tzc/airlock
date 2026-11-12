@@ -1,0 +1,18 @@
+#!/bin/sh
+# Hook global de git (core.hooksPath). Corre la revisión de blindaje cuando toca
+# y luego el hook propio del repo (.git/hooks/<nombre>), para no romper husky,
+# lefthook ni hooks hechos a mano.
+nombre="$(basename "$0")"
+dir="$(dirname "$(readlink -f "$0")")"
+
+if [ "$nombre" = "pre-commit" ]; then
+  python3 -I "$dir/pre-commit.py" || exit 1
+fi
+
+# --git-path respetaría core.hooksPath (este mismo dir); el del repo está en el common dir.
+comun="$(git rev-parse --git-common-dir 2>/dev/null)"
+propio="${comun:+$comun/hooks/$nombre}"
+if [ -n "$propio" ] && [ -x "$propio" ] && [ "$(readlink -f "$propio")" != "$(readlink -f "$0")" ]; then
+  exec "$propio" "$@"
+fi
+exit 0

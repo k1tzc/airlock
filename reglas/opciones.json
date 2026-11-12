@@ -1,0 +1,59 @@
+{
+  "artifacts": {
+    "titulo": "Artifacts",
+    "descripcion": "Páginas/documentos que Claude publica en claude.ai",
+    "bloqueo": {
+      "enableArtifact": false,
+      "permissions": {
+        "deny": ["Artifact", "ArtifactComments", "ArtifactData", "ArtifactCheck"]
+      }
+    }
+  },
+  "docs": {
+    "titulo": "Claude Docs",
+    "descripcion": "Documentos colaborativos en claude.ai",
+    "bloqueo": {
+      "permissions": {
+        "deny": ["mcp__claude_ai_Claude_Docs"]
+      }
+    }
+  },
+  "conectores": {
+    "titulo": "Conectores de claude.ai",
+    "descripcion": "Canva, Google Sheets, etc. (incluye Claude Docs)",
+    "bloqueo": {
+      "disableClaudeAiConnectors": true
+    }
+  },
+  "remoto": {
+    "titulo": "Remote Control",
+    "descripcion": "Manejar esta sesión desde el móvil/web y disparadores remotos",
+    "bloqueo": {
+      "disableRemoteControl": true,
+      "remoteControlAtStartup": false,
+      "permissions": {
+        "deny": ["RemoteTrigger"]
+      }
+    }
+  },
+  "push": {
+    "titulo": "Notificaciones push",
+    "descripcion": "Avisos al móvil cuando Claude termina o necesita algo",
+    "bloqueo": {
+      "agentPushNotifEnabled": false,
+      "inputNeededNotifEnabled": false,
+      "permissions": {
+        "deny": ["PushNotification"]
+      }
+    }
+  },
+  "trafico": {
+    "titulo": "Tráfico no esencial",
+    "descripcion": "Feature flags, notas de versión, auto-update (si lo bloqueas, actualiza con 'claude update')",
+    "bloqueo": {
+      "env": {
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+      }
+    }
+  }
+}
