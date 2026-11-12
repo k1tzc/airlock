@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Hook PreToolUse de blindaje: frena identificadores personales antes de que salgan.
+"""Hook PreToolUse de airlock: frena identificadores personales antes de que salgan.
 
 Lee la llamada a herramienta (JSON por stdin) y la bloquea (exit 2) si:
   - contiene un identificador [siempre] (p. ej. tu correo) en cualquier herramienta;
   - manda un identificador [externo] (clientes, proyectos, tu nombre) a terceros:
     WebFetch/WebSearch, herramientas MCP, comandos de red en Bash o cabeceras
     User-Agent/Referer escritas en archivos;
-  - intenta modificar los archivos de blindaje (la lista, el hook, la política);
+  - intenta modificar los archivos de airlock (la lista, el hook, la política);
   - intenta saltarse los hooks de git con --no-verify.
 
 Los dominios de [propios] se quitan antes de comparar (deploy a tu servidor, etc.).
@@ -75,7 +75,7 @@ def quitar_propios(texto, dominios):
 
 def bloquear(motivo, lista):
     print(
-        f"blindaje: bloqueado — {motivo}. No lo reintentes por otra vía; "
+        f"airlock: bloqueado — {motivo}. No lo reintentes por otra vía; "
         f"si de verdad hace falta, explícaselo al usuario (solo él puede cambiar {lista}).",
         file=sys.stderr,
     )
@@ -157,9 +157,9 @@ def main():
         raise
     except Exception as e:  # noqa: BLE001
         if estricto:
-            print(f"blindaje: error interno del hook ({e}); bloqueado por precaución", file=sys.stderr)
+            print(f"airlock: error interno del hook ({e}); bloqueado por precaución", file=sys.stderr)
             sys.exit(2)
-        print(f"blindaje: error interno del hook ({e})", file=sys.stderr)
+        print(f"airlock: error interno del hook ({e})", file=sys.stderr)
         sys.exit(1)
 
 

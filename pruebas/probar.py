@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pruebas de blindaje. No tocan el sistema: usan un HOME y un /etc falsos.
+"""Pruebas de airlock. No tocan el sistema: usan un HOME y un /etc falsos.
 
   python3 pruebas/probar.py
 """
@@ -67,7 +67,7 @@ def probar_hook(tmp):
 
 
 def correr(env, *args, entrada=None):
-    return subprocess.run(["python3", "-I", os.path.join(REPO, "lib", "blindaje.py"), *args],
+    return subprocess.run(["python3", "-I", os.path.join(REPO, "lib", "airlock.py"), *args],
                           env=env, input=entrada, capture_output=True, text=True)
 
 
@@ -80,7 +80,7 @@ def probar_instalacion(tmp):
     ajustes = os.path.join(home, ".claude", "settings.json")
     json.dump(previo, open(ajustes, "w"))
     open(os.path.join(home, ".config", "git", "ignore"), "w").write("mis-cosas/\n")
-    env = dict(os.environ, BLINDAJE_HOME=home, BLINDAJE_ETC=etc, HOME=home)
+    env = dict(os.environ, AIRLOCK_HOME=home, AIRLOCK_ETC=etc, HOME=home)
     entrada = "persona.prueba@correo.test\n\nCliente Ficticio\n\n\n"
 
     r = correr(env, "aplicar", "--perfil", "normal", "--permitir", "artifacts", entrada=entrada)
@@ -91,7 +91,7 @@ def probar_instalacion(tmp):
     ok("enableArtifact" not in s and "Artifact" not in s["permissions"]["deny"], "Artifacts permitido")
     ok("mcp__claude_ai_Claude_Docs" in s["permissions"]["deny"], "Docs bloqueado")
     ok(s["permissions"]["deny"].count("Read(~/.ssh/**)") == 1, "no duplica reglas que ya existían")
-    ok(oct(os.stat(os.path.join(home, ".config/blindaje/identificadores")).st_mode)[-3:] == "600", "lista con permisos 600")
+    ok(oct(os.stat(os.path.join(home, ".config/airlock/identificadores")).st_mode)[-3:] == "600", "lista con permisos 600")
     ok(correr(env, "revisar").returncode == 0, "auditoría en verde")
 
     r = correr(env, "aplicar", "--perfil", "normal")
@@ -104,14 +104,14 @@ def probar_instalacion(tmp):
     ok(correr(env, "revisar").returncode == 1, "auditoría detecta una regla borrada")
 
     git_cfg = os.path.join(home, ".gitconfig")
-    ok("blindaje" in open(git_cfg).read(), "core.hooksPath configurado")
+    ok("airlock" in open(git_cfg).read(), "core.hooksPath configurado")
 
     r = correr(env, "aplicar", "--perfil", "maxima")
     ok(r.returncode == 0, "aplica perfil máxima" + ("" if r.returncode == 0 else f": {r.stderr}"))
-    pol = json.load(open(os.path.join(etc, "managed-settings.d", "50-blindaje.json")))
+    pol = json.load(open(os.path.join(etc, "managed-settings.d", "50-airlock.json")))
     ok(pol.get("enableArtifact") is False and pol.get("disableClaudeAiConnectors") is True, "máxima bloquea todo")
     ok("--estricto" in pol["hooks"]["PreToolUse"][0]["hooks"][0]["command"], "máxima usa hook estricto")
-    ok(os.path.exists(os.path.join(etc, "blindaje", "identificadores")), "lista copiada a /etc")
+    ok(os.path.exists(os.path.join(etc, "airlock", "identificadores")), "lista copiada a /etc")
 
     correr(env, "desinstalar", "--perfil", "maxima")
     r = correr(env, "desinstalar", "--perfil", "normal")
@@ -126,8 +126,8 @@ def probar_instalacion(tmp):
 def probar_precommit(tmp):
     print("Pre-commit")
     home, repo = os.path.join(tmp, "h2"), os.path.join(tmp, "repo")
-    os.makedirs(os.path.join(home, ".config", "blindaje"))
-    open(os.path.join(home, ".config", "blindaje", "identificadores"), "w").write("[siempre]\npersona.prueba@correo.test\n")
+    os.makedirs(os.path.join(home, ".config", "airlock"))
+    open(os.path.join(home, ".config", "airlock", "identificadores"), "w").write("[siempre]\npersona.prueba@correo.test\n")
     env = dict(os.environ, HOME=home, GIT_CONFIG_GLOBAL=os.path.join(home, ".gitconfig"))
     hooks = os.path.join(tmp, "hooks")
     os.makedirs(hooks)

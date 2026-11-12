@@ -1,5 +1,5 @@
 #!/bin/sh
-# Hook global de git (core.hooksPath). Corre la revisión de blindaje cuando toca
+# Hook global de git (core.hooksPath). Corre la revisión de airlock cuando toca
 # y luego el hook propio del repo (.git/hooks/<nombre>), para no romper husky,
 # lefthook ni hooks hechos a mano.
 nombre="$(basename "$0")"

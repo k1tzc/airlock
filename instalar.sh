@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# blindaje — reglas de seguridad y privacidad para Claude Code y git.
+# airlock — reglas de seguridad y privacidad para Claude Code y git.
 #
 #   ./instalar.sh                                  menú
 #   ./instalar.sh --perfil normal [--permitir artifacts,docs]
@@ -9,10 +9,10 @@
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-NUCLEO=(python3 -I "$DIR/lib/blindaje.py")
+NUCLEO=(python3 -I "$DIR/lib/airlock.py")
 
 maxima() {
-  if [[ $EUID -ne 0 && -z "${BLINDAJE_ETC:-}" ]]; then
+  if [[ $EUID -ne 0 && -z "${AIRLOCK_ETC:-}" ]]; then
     echo "La máxima privacidad escribe en /etc/claude-code; pido sudo."
     exec sudo "$DIR/instalar.sh" --perfil maxima
   fi
@@ -54,7 +54,7 @@ normal_menu() {
 menu() {
   cat <<'EOF'
 
-  blindaje — seguridad y privacidad
+  airlock — seguridad y privacidad
 
    1) Máxima privacidad   todo bloqueado, irrevocable (managed settings, pide sudo)
    2) Seguridad normal    base segura + tú eliges qué funciones permitir
@@ -69,7 +69,7 @@ EOF
     2) normal_menu ;;
     3) "${NUCLEO[@]}" revisar ;;
     4) read -rp "  ¿Cuál? (normal/maxima): " p
-       if [[ $p == maxima && $EUID -ne 0 && -z "${BLINDAJE_ETC:-}" ]]; then
+       if [[ $p == maxima && $EUID -ne 0 && -z "${AIRLOCK_ETC:-}" ]]; then
          exec sudo "$DIR/instalar.sh" --desinstalar maxima
        fi
        "${NUCLEO[@]}" desinstalar --perfil "$p" ;;

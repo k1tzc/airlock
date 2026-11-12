@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-"""Núcleo de blindaje. Lo llama instalar.sh; también se puede usar directo:
+"""Núcleo de airlock. Lo llama instalar.sh; también se puede usar directo:
 
-  blindaje.py aplicar --perfil normal [--permitir artifacts,docs]
-  blindaje.py aplicar --perfil maxima            (como root)
-  blindaje.py revisar
-  blindaje.py desinstalar --perfil normal|maxima
-  blindaje.py opciones                           (para el menú)
-  blindaje.py lista                              (crea la lista de identificadores)
+  airlock.py aplicar --perfil normal [--permitir artifacts,docs]
+  airlock.py aplicar --perfil maxima            (como root)
+  airlock.py revisar
+  airlock.py desinstalar --perfil normal|maxima
+  airlock.py opciones                           (para el menú)
+  airlock.py lista                              (crea la lista de identificadores)
 
 Perfil normal: combina la regla con ~/.claude/settings.json y anota en
-~/.config/blindaje/estado.json qué agregó, para poder cambiar opciones o
+~/.config/airlock/estado.json qué agregó, para poder cambiar opciones o
 desinstalar sin tocar lo demás. Nunca reemplaza el archivo entero.
 
-Perfil máxima: escribe /etc/claude-code/managed-settings.d/50-blindaje.json
+Perfil máxima: escribe /etc/claude-code/managed-settings.d/50-airlock.json
 (todo bloqueado). Las reglas deny y los hooks de ahí se suman a los de cualquier
 otro nivel y ningún proyecto ni el usuario puede quitarlos.
 
-Para probar sin tocar el sistema: BLINDAJE_HOME=/tmp/x BLINDAJE_ETC=/tmp/y.
+Para probar sin tocar el sistema: AIRLOCK_HOME=/tmp/x AIRLOCK_ETC=/tmp/y.
 """
 import argparse
 import copy
@@ -30,8 +30,8 @@ import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AUSENTE = "__ausente__"
-MARCA_MD = ("<!-- blindaje:inicio -->", "<!-- blindaje:fin -->")
-MARCA_IGNORE = ("# blindaje:inicio", "# blindaje:fin")
+MARCA_MD = ("<!-- airlock:inicio -->", "<!-- airlock:fin -->")
+MARCA_IGNORE = ("# airlock:inicio", "# airlock:fin")
 HOOKS_GIT = [
     "applypatch-msg", "pre-applypatch", "post-applypatch", "pre-commit",
     "pre-merge-commit", "prepare-commit-msg", "commit-msg", "post-commit",
@@ -50,20 +50,20 @@ def usuario():
 
 def rutas():
     u = usuario()
-    home = os.environ.get("BLINDAJE_HOME") or u.pw_dir
-    etc = os.environ.get("BLINDAJE_ETC") or "/etc/claude-code"
+    home = os.environ.get("AIRLOCK_HOME") or u.pw_dir
+    etc = os.environ.get("AIRLOCK_ETC") or "/etc/claude-code"
     return {
         "home": home,
         "settings": os.path.join(home, ".claude", "settings.json"),
         "claude_md": os.path.join(home, ".claude", "CLAUDE.md"),
-        "config": os.path.join(home, ".config", "blindaje"),
-        "lista": os.path.join(home, ".config", "blindaje", "identificadores"),
-        "estado": os.path.join(home, ".config", "blindaje", "estado.json"),
-        "datos": os.path.join(home, ".local", "share", "blindaje"),
+        "config": os.path.join(home, ".config", "airlock"),
+        "lista": os.path.join(home, ".config", "airlock", "identificadores"),
+        "estado": os.path.join(home, ".config", "airlock", "estado.json"),
+        "datos": os.path.join(home, ".local", "share", "airlock"),
         "etc": etc,
-        "etc_dir": os.path.join(etc, "blindaje"),
-        "etc_lista": os.path.join(etc, "blindaje", "identificadores"),
-        "etc_politica": os.path.join(etc, "managed-settings.d", "50-blindaje.json"),
+        "etc_dir": os.path.join(etc, "airlock"),
+        "etc_lista": os.path.join(etc, "airlock", "identificadores"),
+        "etc_politica": os.path.join(etc, "managed-settings.d", "50-airlock.json"),
         "etc_managed": os.path.join(etc, "managed-settings.json"),
         "etc_claude_md": os.path.join(etc, "CLAUDE.md"),
     }
@@ -81,7 +81,7 @@ def leer_json(ruta, defecto=None):
 
 def escribir(ruta, texto, modo=0o644, dueno_usuario=True):
     os.makedirs(os.path.dirname(ruta), exist_ok=True)
-    tmp = ruta + ".blindaje-tmp"
+    tmp = ruta + ".airlock-tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         f.write(texto)
     os.chmod(tmp, modo)
@@ -96,7 +96,7 @@ def escribir_json(ruta, datos, **kw):
 
 def dar_al_usuario(ruta):
     """Si corre como root dentro del home del usuario, devuélvele el archivo."""
-    if os.geteuid() != 0 or os.environ.get("BLINDAJE_HOME"):
+    if os.geteuid() != 0 or os.environ.get("AIRLOCK_HOME"):
         return
     u = usuario()
     if ruta.startswith(u.pw_dir):
@@ -117,7 +117,7 @@ def respaldar(ruta):
         os.makedirs(destino, exist_ok=True)
         nombre = ruta.strip("/").replace("/", "__")
         primero = os.path.join(destino, nombre + ".original")
-        if not os.path.exists(primero):  # el original de antes de blindaje, una sola vez
+        if not os.path.exists(primero):  # el original de antes de airlock, una sola vez
             shutil.copy2(ruta, primero)
             dar_al_usuario(primero)
 
@@ -134,7 +134,7 @@ def git_global(*args):
     r = rutas()
     env = dict(os.environ, HOME=r["home"], XDG_CONFIG_HOME=os.path.join(r["home"], ".config"))
     cmd = ["git", "config", "--global", *args]
-    if os.geteuid() == 0 and os.environ.get("SUDO_USER") and not os.environ.get("BLINDAJE_HOME"):
+    if os.geteuid() == 0 and os.environ.get("SUDO_USER") and not os.environ.get("AIRLOCK_HOME"):
         cmd = ["sudo", "-u", usuario().pw_name, "env", f"HOME={r['home']}", *cmd]
     return subprocess.run(cmd, env=env, capture_output=True, text=True, check=False).stdout.strip()
 
@@ -342,7 +342,7 @@ def instalar_archivos(destino, como_root):
 
 def configurar_git(hooks_git):
     actual = git_global("--get", "core.hooksPath")
-    if actual and "blindaje" not in actual:
+    if actual and "airlock" not in actual:
         print(f"  ! core.hooksPath ya apunta a {actual}; no lo toco (el pre-commit no queda activo)")
     else:
         git_global("core.hooksPath", hooks_git)
@@ -398,7 +398,7 @@ def aplicar_normal(permitidas):
 
 def aplicar_maxima():
     r = rutas()
-    if os.geteuid() != 0 and not os.environ.get("BLINDAJE_ETC"):
+    if os.geteuid() != 0 and not os.environ.get("AIRLOCK_ETC"):
         sys.exit("La máxima privacidad escribe en /etc/claude-code: corre con sudo.")
     if not os.path.exists(r["etc_lista"]):
         if not os.path.exists(r["lista"]):
@@ -406,7 +406,7 @@ def aplicar_maxima():
         os.makedirs(r["etc_dir"], exist_ok=True)
         shutil.copy2(r["lista"], r["etc_lista"])
     os.chmod(r["etc_lista"], 0o640)
-    if os.geteuid() == 0 and not os.environ.get("BLINDAJE_ETC"):
+    if os.geteuid() == 0 and not os.environ.get("AIRLOCK_ETC"):
         os.chown(r["etc_lista"], 0, usuario().pw_gid)  # el usuario la lee (pre-commit), solo root la cambia
 
     instalar_archivos(r["etc_dir"], como_root=True)
@@ -440,7 +440,7 @@ def desinstalar(perfil):
         shutil.rmtree(r["datos"], ignore_errors=True)
         print("Perfil normal quitado. La lista sigue en", r["lista"], "(bórrala tú si quieres).")
     else:
-        if os.geteuid() != 0 and not os.environ.get("BLINDAJE_ETC"):
+        if os.geteuid() != 0 and not os.environ.get("AIRLOCK_ETC"):
             sys.exit("Quitar la máxima privacidad requiere sudo.")
         for p in (r["etc_politica"],):
             if os.path.exists(p):
@@ -466,7 +466,7 @@ def revisar():
     estado = leer_json(r["estado"])
     maxima = os.path.exists(r["etc_politica"])
     if not estado and not maxima:
-        print("blindaje no está instalado. Corre ./instalar.sh")
+        print("airlock no está instalado. Corre ./instalar.sh")
         return 1
 
     if maxima:
@@ -519,7 +519,7 @@ def revisar():
 # ── CLI ────────────────────────────────────────────────────────────────────
 
 def main():
-    p = argparse.ArgumentParser(description="blindaje")
+    p = argparse.ArgumentParser(description="airlock")
     sub = p.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("aplicar")
     a.add_argument("--perfil", choices=["normal", "maxima"], required=True)

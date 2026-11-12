@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pre-commit global de blindaje: frena secretos e identificadores [siempre] en lo que se commitea.
+"""Pre-commit global de airlock: frena secretos e identificadores [siempre] en lo que se commitea.
 
 Revisa solo las líneas añadidas del staging. Si gitleaks está instalado, también lo corre.
 Si es un falso positivo, quien commitea (una persona) puede usar 'git commit --no-verify'.
@@ -11,8 +11,8 @@ import subprocess
 import sys
 
 LISTAS = [
-    os.path.expanduser("~/.config/blindaje/identificadores"),
-    "/etc/claude-code/blindaje/identificadores",
+    os.path.expanduser("~/.config/airlock/identificadores"),
+    "/etc/claude-code/airlock/identificadores",
 ]
 
 SECRETOS = [
@@ -80,7 +80,7 @@ def main():
             problemas.append("gitleaks encontró secretos (detalle arriba)")
 
     if problemas:
-        print("blindaje: commit frenado\n  " + "\n  ".join(sorted(set(problemas))), file=sys.stderr)
+        print("airlock: commit frenado\n  " + "\n  ".join(sorted(set(problemas))), file=sys.stderr)
         print("Si es un falso positivo y lo revisaste tú: git commit --no-verify", file=sys.stderr)
         sys.exit(1)
 

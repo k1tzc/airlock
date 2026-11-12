@@ -1,6 +1,6 @@
-# Lista de identificadores de blindaje. El archivo real NO va en el repo:
-#   seguridad normal → ~/.config/blindaje/identificadores
-#   máxima           → /etc/claude-code/blindaje/identificadores (solo root lo cambia)
+# Lista de identificadores de airlock. El archivo real NO va en el repo:
+#   seguridad normal → ~/.config/airlock/identificadores
+#   máxima           → /etc/claude-code/airlock/identificadores (solo root lo cambia)
 # Un valor por línea. Mayúsculas, espacios y guiones no importan:
 # "Mi Proyecto" también casa con "mi-proyecto" y "MiProyecto".
 
